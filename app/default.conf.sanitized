@@ -1,11 +1,14 @@
-# DO NOT REMOVE
-id = myexample
-name = My App Name
-deeplink = 
+id = org.disroot.webchat
+name = Disroot Webchat
+deeplink = webchat.disroot.org
 trustUserCA = false
-icon = 
-scripts = 
-mainURL = https://github.com/Jipok
+icon = logo_xmpp.png
+scripts = *.js
+jksFile = org.disroot.webchat.dhitchenor.jks
+jksAlias = disrootWebchat
+jksStorepass = <redacted>
+jksKeypass = <redacted>
+mainURL = https://webchat.disroot.org/
 requireDoubleBackToExit = true
 allowSubdomains = true
 enableExternalLinks = true

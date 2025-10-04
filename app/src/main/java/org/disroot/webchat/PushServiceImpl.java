@@ -1,4 +1,4 @@
-package com.myexample.webtoapk; 
+package org.disroot.webchat; 
 
 import android.content.Context;
 import android.content.Intent;
@@ -56,7 +56,7 @@ public class PushServiceImpl extends PushService {
             .apply();
 
         // Broadcast the new endpoint AND keys to the MainActivity
-        Intent intent = new Intent("com.myexample.webtoapk.NEW_ENDPOINT");
+        Intent intent = new Intent("org.disroot.webchat.NEW_ENDPOINT");
         intent.putExtra("endpoint", endpointUrl);
         intent.putExtra("p256dh", p256dh);
         intent.putExtra("auth", auth);

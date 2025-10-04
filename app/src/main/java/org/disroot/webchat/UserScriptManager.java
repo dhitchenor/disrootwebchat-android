@@ -1,4 +1,4 @@
-package com.myexample.webtoapk;
+package org.disroot.webchat;
 
 import android.content.Context;
 import java.io.BufferedReader;

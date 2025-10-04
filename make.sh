@@ -33,7 +33,7 @@ try() {
     local log_file=$(mktemp)
     
     if [ $# -eq 1 ]; then
-        # Если передан один аргумент - используем eval для сложных команд
+        # If a single argument is passed, use eval for complex commands
         if ! eval "$1" &> "$log_file"; then
             echo -e "${RED}[!]${NC} Failed: $1"
             cat "$log_file"
@@ -41,7 +41,7 @@ try() {
             exit 1
         fi
     else
-        # Если несколько аргументов - запускаем напрямую
+        # If there are several arguments - run directly
         if ! "$@" &> "$log_file"; then
             echo -e "${RED}[!]${NC} Failed: $*"
             cat "$log_file"
@@ -54,7 +54,7 @@ try() {
 
 
 set_var() {
-    local java_file="app/src/main/java/com/$appname/webtoapk/MainActivity.java"
+    local java_file="app/src/main/java/org/disroot/webchat/MainActivity.java"
     [ ! -f "$java_file" ] && error "MainActivity.java not found"
     
     local pattern="$@"
@@ -103,69 +103,21 @@ set_var() {
     fi
 }
 
-merge_config_with_default() {
-    local default_conf="app/default.conf"
-    local user_conf="$1"
-    local merged_conf
-    merged_conf=$(mktemp)
-
-    # Temporary file for default lines that are missing in user config
-    local temp_defaults
-    temp_defaults=$(mktemp)
-
-    # For each non-empty, non-comment line in default.conf
-    while IFS= read -r line; do
-        # Extract key (everything up to '=')
-        key=$(echo "$line" | cut -d '=' -f1 | xargs)
-        if [ -n "$key" ]; then
-            # Check if the key is missing in the user config
-            if ! grep -q -E "^[[:space:]]*$key[[:space:]]*=" "$user_conf"; then
-                # Key is missing – add the default line
-                echo "$line" >> "$temp_defaults"
-            fi
-        fi
-    done < <(grep -vE '^[[:space:]]*(#|$)' "$default_conf")
-
-    # Now combine default lines (if any) with the user configuration.
-    # The defaults will be added on top, but since they are defined earlier they
-    # can be overridden by any subsequent assignment (если вдруг порядок имеет значение).
-    cat "$temp_defaults" "$user_conf" > "$merged_conf"
-
-    rm -f "$temp_defaults"
-    echo "$merged_conf"
-}
 
 apply_config() {
-    local config_file="${1:-webapk.conf}"
+    local config_file="default.conf"
 
-    # If config file is not found in project root, try in caller's directory
-    if [ ! -f "$config_file" ] && [ -f "$ORIGINAL_PWD/$config_file" ]; then
-        config_file="$ORIGINAL_PWD/$config_file"
-    fi
-
-    [ ! -f "$config_file" ] && error "Config file not found: $config_file"
-
-    export CONFIG_DIR="$(dirname "$config_file")"
+    export CONFIG_DIR="app"
 
     info "Using config: $config_file"
 
-    config_file=$(merge_config_with_default "$config_file")
-    
     while IFS='=' read -r key value || [ -n "$key" ]; do
-        # Skip empty lines and comments
         [[ -z "$key" || "$key" =~ ^[[:space:]]*# ]] && continue
         
-        # Trim whitespace
         key=$(echo "$key" | xargs)
         value=$(echo "$value" | xargs)
         
         case "$key" in
-            "id")
-                chid "$value"
-                ;;
-            "name")
-                rename "$value"
-                ;;
             "deeplink")
                 set_deep_link "$value"
                 ;;
@@ -178,23 +130,42 @@ apply_config() {
             "scripts")
                 set_userscripts $value
                 ;;
-            *)
-                set_var "$key = $value"
+            "jksFile")
+                export jksFile="$value"
+                ;;
+            "jksAlias")
+                export jksAlias="$value"
+                ;;
+            "jksStorepass")
+                export jksStorepass="$value"
+                ;;
+            "jksKeypass")
+                export jksKeypass="$value"
                 ;;
         esac
-    done < <(sed -e '/^[[:space:]]*#/d' -e 's/[[:space:]]\+#.*//' "$config_file")
+    done < <(sed -e '/^[[:space:]]*#/d' -e 's/[[:space:]]\+#.*//' "$CONFIG_DIR/$config_file")
 }
 
 
 apk() {
-    if [ ! -f "app/my-release-key.jks" ]; then
-        error "Keystore file not found. Run './make.sh keygen' first"
+    local jks="${jksFile}"
+    local alias="${jksAlias}"
+    local storepass="${jksStorepass}"
+    local keypass="${jksKeypass}"
+    
+    if [ ! -f "app/$jks" ]; then
+        error "Keystore file not found: app/$jks. Run './make.sh keygen' first"
     fi
 
     rm -f app/build/outputs/apk/release/app-release.apk
 
+    sed -i \
+        -e "s|^storePassword \".*\"|storePassword \"${storepass}\"|" \
+        -e "s|^keyPassword \".*\"|keyPassword \"${keypass}\"|" \
+        app/build.gradle
+
     info "Building APK..."
-    try "./gradlew assembleRelease --no-daemon --quiet"
+    try "./gradlew assembleRelease --no-daemon --quiet "
 
     if [ -f "app/build/outputs/apk/release/app-release.apk" ]; then
         log "APK successfully built and signed"
@@ -202,33 +173,25 @@ apk() {
         echo -e "${BOLD}----------------"
         echo -e "Final APK copied to: ${GREEN}$appname.apk${NC}"
         echo -e "Size: ${BLUE}$(du -h app/build/outputs/apk/release/app-release.apk | cut -f1)${NC}"
-        echo -e "Package: ${BLUE}com.${appname}.webtoapk${NC}"
+        echo -e "Package: ${BLUE}${appname}${NC}"
         echo -e "App name: ${BLUE}$(grep -o 'app_name">[^<]*' app/src/main/res/values/strings.xml | cut -d'>' -f2)${NC}"
-        echo -e "URL: ${BLUE}$(grep 'String mainURL' app/src/main/java/com/$appname/webtoapk/*.java | cut -d'"' -f2)${NC}"
+        echo -e "URL: ${BLUE}$(grep 'String mainURL' app/src/main/java/$appname/*.java | cut -d'"' -f2)${NC}"
         echo -e "${BOLD}----------------${NC}"
     else
         error "Build failed"
     fi
 }
 
-test() {
-    info "Detected app name: $appname"
-    try "adb install app/build/outputs/apk/release/app-release.apk"
-    try "adb logcat -c" # clean logs
-    try "adb shell am start -n com.$appname.webtoapk/.MainActivity"
-    echo "=========================="
-    adb logcat | grep -oP "(?<=WebToApk: ).*"
-
-    # adb logcat *:I | grep com.$appname.webtoapk
-
-	# https://stackoverflow.com/questions/29072501/how-to-unlock-android-phone-through-adb
-	# adb shell input keyevent 26 #Pressing the lock button
-	# sleep 1s
-	# adb shell input touchscreen swipe 930 880 930 380 #Swipe UP
-}
 
 keygen() {
-    if [ -f "app/my-release-key.jks" ]; then
+    apply_config
+
+    local jks="${jksFile}"
+    local alias="${jksAlias}"
+    local storepass="${jksStorepass}"
+    local keypass="${jksKeypass}"
+
+    if [ -f "app/$jks" ]; then
         warn "Keystore already exists"
         read -p "Do you want to replace it? (y/N) " -n 1 -r
         echo
@@ -236,72 +199,12 @@ keygen() {
             info "Cancelled"
             return 1
         fi
-        rm app/my-release-key.jks
+        rm app/$jks
     fi
 
-    info "Generating keystore..."
-    try "keytool -genkey -v -keystore app/my-release-key.jks -keyalg RSA -keysize 2048 -validity 10000 -alias my -storepass '123456' -keypass '123456' -dname '$INFO'"
+    info "Generating keystore: app/$jks"
+    try "keytool -genkey -v -keystore app/$jks -keyalg RSA -keysize 2048 -validity 10000 -storetype JKS -alias $alias -storepass $storepass -keypass $keypass -dname '$INFO'"
     log "Keystore generated successfully"
-}
-
-clean() {
-    info "Cleaning build files..."
-    try rm -rf app/build .gradle
-    apply_config app/default.conf
-    log "Clean completed"
-}
-
-
-chid() {
-    [ -z "$1" ] && error "Please provide an application ID"
-
-    if ! [[ $1 =~ ^[a-zA-Z][a-zA-Z0-9_]*$ ]]; then
-        error "Invalid application ID. Use only letters, numbers and underscores, start with a letter"
-    fi
-   
-    try "find . -type f \( -name '*.gradle' -o -name '*.java' -o -name '*.xml' \) -exec \
-        sed -i 's/com\.\([a-zA-Z0-9_]*\)\.webtoapk/com.$1.webtoapk/g' {} +"
-
-    if [ "$1" = "$appname" ]; then
-        return 0
-    fi
-
-    info "Old name: com.$appname.webtoapk"
-    info "Renaming to: com.$1.webtoapk"
-    
-    try "mv app/src/main/java/com/$appname app/src/main/java/com/$1"
-
-    appname=$1
-    
-    log "Application ID changed successfully"
-}
-
-
-rename() {
-    local new_name="$*"
-    
-    if [ -z "$new_name" ]; then
-        error "Please provide a display name\nUsage: $0 display_name \"My App Name\""
-    fi
-    
-    # Найти все файлы strings.xml в различных языковых директориях
-    find app/src/main/res/values* -name "strings.xml" | while read xml_file; do
-        current_name=$(grep -o 'app_name">[^<]*' "$xml_file" | cut -d'>' -f2)
-        if [ "$current_name" = "$new_name" ]; then
-            continue
-        fi
-        
-        escaped_name=$(echo "$new_name" | sed 's/[\/&]/\\&/g')
-        try sed -i "s|<string name=\"app_name\">[^<]*</string>|<string name=\"app_name\">$escaped_name</string>|" "$xml_file"
-        
-        # Получаем код языка из пути файла
-        lang_code=$(echo "$xml_file" | grep -o 'values-[^/]*' | cut -d'-' -f2)
-        if [ -z "$lang_code" ]; then
-            lang_code="default"
-        fi
-        
-        log "Display name changed to: $new_name (${lang_code})"
-    done
 }
 
 
@@ -418,25 +321,11 @@ set_network_security_config() {
 
 
 set_icon() {
-    local icon_path="$@"
-    local default_icon="$PWD/app/example.png"
+    local default_icon="app/logo_xmpp.png"
     local dest_file="app/src/main/res/mipmap/ic_launcher.png"
     
-    # If no icon provided, use default
-    if [ -z "$icon_path" ]; then
-        icon_path="$default_icon"
-    fi
-
-    # If icon_path is not absolute, prepend CONFIG_DIR
-    if [ -n "${CONFIG_DIR:-}" ] && [[ "$icon_path" != /* ]]; then
-        icon_path="$CONFIG_DIR/$icon_path"
-    fi
-
-    # Validate icon
-    [ ! -f "$icon_path" ] && error "Icon file not found: $icon_path"
-    
     # Check if file is PNG
-    file_type=$(file -b --mime-type "$icon_path")
+    file_type=$(file -b --mime-type "$default_icon")
     if [ "$file_type" != "image/png" ]; then
         error "Icon must be in PNG format, got: $file_type"
     fi
@@ -445,16 +334,12 @@ set_icon() {
     mkdir -p "$(dirname "$dest_file")"
     
     # Check if icon needs to be updated
-    if [ -f "$dest_file" ] && cmp -s "$icon_path" "$dest_file"; then
+    if [ -f "$dest_file" ] && cmp -s "$default_icon" "$dest_file"; then
         return 0
-    fi
-
-    if [ -z "$@" ]; then
-        warn "Using example.png for icon"
     fi
     
     # Copy icon
-    try "cp \"$icon_path\" \"$dest_file\""
+    try "cp \"$default_icon\" \"$dest_file\""
     log "Icon updated successfully"
 }
 
@@ -749,7 +634,9 @@ ORIGINAL_PWD="$PWD"
 try cd "$(dirname "$0")"
 
 export ANDROID_HOME=$PWD/cmdline-tools/
-appname=$(grep -Po '(?<=applicationId "com\.)[^.]*' app/build.gradle)
+
+#Just in case Android is already installed, somewhere else
+unset ANDROID_SDK_ROOT
 
 # Set Gradle's cache directory to be local to the project
 export GRADLE_USER_HOME=$PWD/.gradle-cache
@@ -794,8 +681,6 @@ if [ $# -eq 0 ]; then
     echo -e "${BOLD}Usage:${NC}"
     echo -e "  ${BLUE}$0 keygen${NC}          - Generate signing key"
     echo -e "  ${BLUE}$0 build${NC} [config]  - Apply configuration and build"
-    echo -e "  ${BLUE}$0 test${NC}            - Install and test APK via adb, show logs"
-    echo -e "  ${BLUE}$0 clean${NC}           - Clean build files, reset settings"
     echo 
     echo -e "  ${BLUE}$0 apk${NC}             - Build APK without apply_config"
     echo -e "  ${BLUE}$0 apply_config${NC}    - Apply settings from config file"

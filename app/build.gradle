@@ -18,11 +18,11 @@ allprojects {
 apply plugin: 'com.android.application'
 
 android {
-    namespace 'com.myexample.webtoapk'
+    namespace 'org.disroot.webchat'
 
     compileSdkVersion 33
     defaultConfig {
-        applicationId "com.myexample.webtoapk"
+        applicationId "org.disroot.webchat"
         minSdkVersion 24
         targetSdkVersion 33
         versionCode 1
@@ -44,10 +44,11 @@ android {
 
     signingConfigs {
         release {
-            storeFile file("my-release-key.jks")
+            storeFile file("org.disroot.webchat.dhitchenor.jks")
             storePassword "123456"
-            keyAlias "my"
-            keyPassword "123456"
+            keyAlias "disrootWebchat"
+            keyPassword "567890"
+            storeType "JKS"
         }
     }
 

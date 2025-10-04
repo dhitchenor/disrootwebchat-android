@@ -1,4 +1,4 @@
-package com.myexample.webtoapk;
+package org.disroot.webchat;
 
 import android.content.DialogInterface;
 import android.net.http.SslError;
@@ -101,7 +101,7 @@ public class MainActivity extends AppCompatActivity {
     private BroadcastReceiver unifiedPushEndpointReceiver;
     private BroadcastReceiver mediaActionReceiver;
 
-    String mainURL = "https://github.com/Jipok";
+    String mainURL = "https://webchat.disroot.org/";
     boolean requireDoubleBackToExit = true;
     boolean allowSubdomains = true;
 
@@ -120,7 +120,7 @@ public class MainActivity extends AppCompatActivity {
     boolean JSCanOpenWindowsAutomatically = true;
     boolean DomStorageEnabled = true;
     boolean DatabaseEnabled = true;
-    boolean MediaPlaybackRequiresUserGesture = true;
+    boolean MediaPlaybackRequiresUserGesture = false;
     boolean SavePassword = true;
     boolean AllowFileAccess = true;
     boolean AllowFileAccessFromFileURLs = true;
@@ -222,9 +222,9 @@ public class MainActivity extends AppCompatActivity {
                 Uri[] results = null;
 
                 if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
-                    Intent intentData = result.getData(); // Переименовали с data на intentData
+                    Intent intentData = result.getData(); // Renamed from data to intentData
 
-                    // Обработка множественного выбора
+                    // Handling multiple choice
                     if (intentData.getClipData() != null) {
                         int count = intentData.getClipData().getItemCount();
                         results = new Uri[count];
@@ -321,9 +321,9 @@ public class MainActivity extends AppCompatActivity {
         };
         // Register the receiver with compatibility for different Android versions
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(unifiedPushEndpointReceiver, new IntentFilter("com.myexample.webtoapk.NEW_ENDPOINT"), RECEIVER_NOT_EXPORTED);
+            registerReceiver(unifiedPushEndpointReceiver, new IntentFilter("org.disroot.webchat.NEW_ENDPOINT"), RECEIVER_NOT_EXPORTED);
         } else {
-            registerReceiver(unifiedPushEndpointReceiver, new IntentFilter("com.myexample.webtoapk.NEW_ENDPOINT"));
+            registerReceiver(unifiedPushEndpointReceiver, new IntentFilter("org.disroot.webchat.NEW_ENDPOINT"));
         }
 
         if (edgeToEdge) {
@@ -596,7 +596,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, FileChooserParams fileChooserParams) {
-            // Закрываем предыдущий callback если есть
+            // Close the previous callback, if there is one
             if (mFilePathCallback != null) {
                 mFilePathCallback.onReceiveValue(null);
             }
@@ -606,7 +606,7 @@ public class MainActivity extends AppCompatActivity {
             intent.addCategory(Intent.CATEGORY_OPENABLE);
             intent.setType("image/*");
 
-            // Проверяем параметры файлового диалога
+            // Checking the file dialog parameters
             String[] acceptTypes = fileChooserParams.getAcceptTypes();
             if (acceptTypes.length > 0 && acceptTypes[0] != null && !acceptTypes[0].isEmpty()) {
                 if (acceptTypes[0].contains("image")) {
@@ -616,18 +616,18 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
 
-            // Поддержка множественного выбора
+            // Multi-choice support
             if (fileChooserParams.getMode() == FileChooserParams.MODE_OPEN_MULTIPLE) {
                 intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
             }
 
-            Intent chooserIntent = Intent.createChooser(intent, "Выберите файл");
+            Intent chooserIntent = Intent.createChooser(intent, "Choose a file");
 
             try {
                 fileChooserLauncher.launch(chooserIntent);
             } catch (ActivityNotFoundException e) {
                 mFilePathCallback = null;
-                Toast.makeText(MainActivity.this, "Невозможно открыть файловый менеджер", Toast.LENGTH_LONG).show();
+                Toast.makeText(MainActivity.this, "Unable to open file manager", Toast.LENGTH_LONG).show();
                 return false;
             }
 
@@ -853,7 +853,7 @@ public class MainActivity extends AppCompatActivity {
         // Animation on app open
         @Override
         public void onPageFinished(WebView webview, String url) {
-            // Без флага errorOccurred у нас будет видно ошибку webview пока идёт анимация после tryAgain
+            // Without the errorOccurred flag, we will see a webview error while the animation is in progress after tryAgain
             if (!errorOccurred) {
                 Log.d("WebToApk","Current page: " + url);
                 spinner.setVisibility(View.GONE);

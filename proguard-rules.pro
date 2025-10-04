@@ -1,4 +1,4 @@
--keepclassmembers class com.myexample.webtoapk.MainActivity {
+-keepclassmembers class org.disroot.webchat.MainActivity {
     *;
 }
 

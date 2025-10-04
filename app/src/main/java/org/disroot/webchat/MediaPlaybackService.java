@@ -1,4 +1,4 @@
-package com.myexample.webtoapk;
+package org.disroot.webchat;
 
 import android.app.Notification;
 import android.app.PendingIntent;
@@ -37,20 +37,20 @@ import java.util.concurrent.Executors;
 
 public class MediaPlaybackService extends Service {
     public static final String NOTIFICATION_CHANNEL_ID = "web_app_notifications";
-    public static final String ACTION_UPDATE_METADATA = "com.myexample.webtoapk.UPDATE_METADATA";
-    public static final String ACTION_UPDATE_STATE = "com.myexample.webtoapk.UPDATE_STATE";
-    public static final String ACTION_SET_HANDLERS = "com.myexample.webtoapk.SET_HANDLERS";
-    public static final String ACTION_STOP_SERVICE = "com.myexample.webtoapk.STOP_SERVICE";
-    public static final String ACTION_UPDATE_POSITION = "com.myexample.webtoapk.UPDATE_POSITION";
+    public static final String ACTION_UPDATE_METADATA = "org.disroot.webchat.UPDATE_METADATA";
+    public static final String ACTION_UPDATE_STATE = "org.disroot.webchat.UPDATE_STATE";
+    public static final String ACTION_SET_HANDLERS = "org.disroot.webchat.SET_HANDLERS";
+    public static final String ACTION_STOP_SERVICE = "org.disroot.webchat.STOP_SERVICE";
+    public static final String ACTION_UPDATE_POSITION = "org.disroot.webchat.UPDATE_POSITION";
 
     // Actions from notification buttons
-    public static final String ACTION_PLAY = "com.myexample.webtoapk.PLAY";
-    public static final String ACTION_PAUSE = "com.myexample.webtoapk.PAUSE";
-    public static final String ACTION_NEXT = "com.myexample.webtoapk.NEXT";
-    public static final String ACTION_PREVIOUS = "com.myexample.webtoapk.PREVIOUS";
+    public static final String ACTION_PLAY = "org.disroot.webchat.PLAY";
+    public static final String ACTION_PAUSE = "org.disroot.webchat.PAUSE";
+    public static final String ACTION_NEXT = "org.disroot.webchat.NEXT";
+    public static final String ACTION_PREVIOUS = "org.disroot.webchat.PREVIOUS";
 
     // Action for broadcasting to MainActivity
-    public static final String BROADCAST_MEDIA_ACTION = "com.myexample.webtoapk.BROADCAST_MEDIA_ACTION";
+    public static final String BROADCAST_MEDIA_ACTION = "org.disroot.webchat.BROADCAST_MEDIA_ACTION";
     public static final String EXTRA_MEDIA_ACTION = "EXTRA_MEDIA_ACTION";
 
 

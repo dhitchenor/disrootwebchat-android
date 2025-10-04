@@ -1,6 +1,5 @@
-# Website-to-APK
-
-A simple tool to convert any website into an Android APK without requiring Android Studio or Java programming knowledge. The app acts as a WebView wrapper around your chosen website.
+# Disroot Webchat for Android
+A simple tool to convert the  [Disroot Webchat](https://webchat.disroot.org) (Movim) into an Android APK without requiring Android Studio or Java programming knowledge; as with the original [website-to-apk](https://github.com/Jipok/website-to-apk) by Jipok, the app acts as a WebView wrapper around the Disroot Webchat Instance.
 
 ## Features
 
@@ -14,53 +13,27 @@ A simple tool to convert any website into an Android APK without requiring Andro
 
 1. Clone this repository:
 ```bash
-git clone https://github.com/Jipok/website-to-apk
-cd website-to-apk
+git clone https://github.com/dhitchenor/disrootwebchat-android
+cd disrootwebchat-android
 ```
 
-2. Create a configuration file `webapk.conf`:
-```ini
-id = myapp                          # Application ID (will be com.myapp.webtoapk)
-name = My App Name                  # Display name of the app
-mainURL = https://example.com       # Target website URL
-icon = example.png                  # Path to your app icon (PNG format)
-
-allowSubdomains = true              # Allow navigation between example.com and sub.example.com
-requireDoubleBackToExit = true      # Require double back press to exit app
-
-enableExternalLinks = true          # Allow external links
-openExternalLinksInBrowser = true   # If allowed: open external links in browser or WebView
-confirmOpenInBrowser = true         # Show confirmation before opening external browser
-
-allowOpenMobileApp = false          # Block external app links/schemes
-```
-
-3. Generate signing key (only needed once, keep the generated file safe):
+2. Generate signing key (only needed once, keep the generated file safe):
 ```bash
 ./make.sh keygen
 ```
 
-4. Apply configuration and build:
+3. Apply configuration and build:
 ```bash
 ./make.sh build
 ```
 
-The final APK will be created in the current directory.
+The final APK will be created in the app/build directory.
 
-### YouTube Example
-
-Pre-configured configuration files for YouTube are available in the <code>confs/youtube</code> directory. To build a YouTube APK, simply execute:
-
-```bash
-./make.sh build confs/youtube/webapk.conf
-```
 
 ## Available Commands
 
-- `./make.sh build [config]` - Apply configuration and build
+- `./make.sh build` - Apply configuration and build
 - `./make.sh keygen` - Generate signing key
-- `./make.sh test` - Install and test APK on connected device
-- `./make.sh clean` - Clean build files
 -
 - `./make.sh apk` - Build APK without apply_config
 - `./make.sh apply_config` - Apply settings from configuration file
@@ -111,6 +84,11 @@ Example of some useful scripts:
 ## Additional WebView Options
 The following advanced options can also be configured:
 ```ini
+jksFile = my-release-key.jks          # Signing file for the android app
+jksAlias = my                         # Signing alias for the android app
+jksStorepass = 123456                 # Password for the Signing File Store
+jksKeypass = 123456                   # Password for the Individual Key
+
 cookies = "key1=value1; key2=value2"  # Cookies for mainURL host
 basicAuth = login:password            # HTTP Basic Auth credentials for mainURL host
 userAgent = "MyCustomUserAgent/1.0"   # Custom UserAgent header
@@ -142,7 +120,6 @@ geolocationEnabled     = false        # Block geolocation API
 ## Notes
 
 - All app data is stored in the app's private directory
-- The keystore `app/my-release-key.jks` password is set to "123456" by default
 - Internet permission is required and automatically included
 - If you need to support [different Android versions](https://apilevels.com/), edit `app/build.gradle` accordingly
-- Based on the original work from: https://github.com/successtar/web-to-app  
+- Based on the original work from: https://github.com/successtar/web-to-app

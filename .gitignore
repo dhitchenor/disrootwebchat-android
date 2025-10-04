@@ -1,3 +1,13 @@
 *.iml
 .gradle
-./app/build
+.gradle-cache
+app/build/
+
+# Frameworks
+cmdline-tools
+
+# Disroot Webchat Build Parameters
+app/default.conf
+
+# Release Keys
+app/*.jks
